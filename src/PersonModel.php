@@ -1,10 +1,13 @@
 <?php
 
-namespace Src\TableGateways;
+namespace Src;
 
 use PDO;
 
-class PersonGateway {
+/**
+ * All db related stuff happens here.
+ */
+class PersonModel {
 
     private $db = null;
 
@@ -62,6 +65,24 @@ class PersonGateway {
         }    
     }
 
+    /**
+     * Example for the request from Postman
+     * 
+     * {
+     * "firstname": "gdrga",
+     * "lastname": "agreag"
+     * }
+     * Note: when making PUT and POST requests, make sure to set the Body type to raw, 
+     * then paste the payload in JSON format and set the content type to JSON (application/json).
+     * Explanation for (:firstname, :lastname); line:
+     * we use here prepared statements. Source: https://www.w3schools.com/php/php_mysql_prepared_statements.asp
+     * Basically we prepare a statement, but without values. The values will be added later,
+     * during the statement execution.
+     * 
+     *
+     * @param Array $input
+     * @return void
+     */
     public function insert(Array $input)
     {
         $statement = "
@@ -73,10 +94,10 @@ class PersonGateway {
 
         try {
             $statement = $this->db->prepare($statement);
-            $statement->execute(array(
+            $statement->execute([
                 'firstname' => $input['firstname'],
                 'lastname'  => $input['lastname'],
-            ));
+            ]);
             return $statement->rowCount();
         } catch (\PDOException $e) {
             exit($e->getMessage());
@@ -106,6 +127,12 @@ class PersonGateway {
         }    
     }
 
+    /**
+     * http://localhost:8889/person/1, but with DELETE request
+     *
+     * @param [type] $id
+     * @return void
+     */
     public function delete($id)
     {
         $statement = "
@@ -115,7 +142,7 @@ class PersonGateway {
 
         try {
             $statement = $this->db->prepare($statement);
-            $statement->execute(array('id' => $id));
+            $statement->execute(['id' => $id]);
             return $statement->rowCount();
         } catch (\PDOException $e) {
             exit($e->getMessage());

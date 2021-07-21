@@ -1,14 +1,15 @@
 <?php
-namespace Src\Controller;
 
-use Src\TableGateways\PersonGateway;
+namespace Src;
+
+use Src\PersonModel;//PersonGateway is the part where the db PDO stuff functions are defined
 
 class PersonController {
 
     private $db;
     private $requestMethod;
     private $userId;
-    private $personGateway;
+    private $personModel;
 
     public function __construct($db, $requestMethod, $userId)
     {
@@ -16,16 +17,24 @@ class PersonController {
         $this->requestMethod = $requestMethod;
         $this->userId = $userId;
 
-        $this->personGateway = new PersonGateway($db);
+        $this->personModel = new PersonModel($db);
     }
 
+    /**
+     * Here we use a switch to do the right action depending on the request method. This is just a switch here,
+     * and this switch will call the right function from this class. Again, depending on the request method.
+     *
+     * @return void
+     */
     public function processRequest()
     {
         switch ($this->requestMethod) {
             case 'GET':
                 if ($this->userId) {
+                    //this will be the 'show one user'
                     $response = $this->getUser($this->userId);
                 } else {
+                    //this will be the show all users
                     $response = $this->getAllUsers();
                 };
                 break;
@@ -50,7 +59,7 @@ class PersonController {
 
     private function getAllUsers()
     {
-        $result = $this->personGateway->findAll();
+        $result = $this->personModel->findAll();
         $response['status_code_header'] = 'HTTP/1.1 200 OK';
         $response['body'] = json_encode($result);
         return $response;
@@ -58,7 +67,7 @@ class PersonController {
 
     private function getUser($id)
     {
-        $result = $this->personGateway->find($id);
+        $result = $this->personModel->find($id);
         if (! $result) {
             return $this->notFoundResponse();
         }
@@ -67,13 +76,21 @@ class PersonController {
         return $response;
     }
 
+    /**
+     * Detailed explanation for the php://input part (this is how we receive json post with php)
+     * https://www.geeksforgeeks.org/how-to-receive-json-post-with-php/
+     *
+     * @return void
+     */
     private function createUserFromRequest()
     {
-        $input = (array) json_decode(file_get_contents('php://input'), TRUE);
+        $dataFromUrl = file_get_contents('php://input');
+        $dataJson = json_decode($dataFromUrl, true);
+        $input = (array) $dataJson;
         if (! $this->validatePerson($input)) {
             return $this->unprocessableEntityResponse();
         }
-        $this->personGateway->insert($input);
+        $this->personModel->insert($input);
         $response['status_code_header'] = 'HTTP/1.1 201 Created';
         $response['body'] = null;
         return $response;
@@ -81,7 +98,7 @@ class PersonController {
 
     private function updateUserFromRequest($id)
     {
-        $result = $this->personGateway->find($id);
+        $result = $this->personModel->find($id);
         if (! $result) {
             return $this->notFoundResponse();
         }
@@ -89,7 +106,7 @@ class PersonController {
         if (! $this->validatePerson($input)) {
             return $this->unprocessableEntityResponse();
         }
-        $this->personGateway->update($id, $input);
+        $this->personModel->update($id, $input);
         $response['status_code_header'] = 'HTTP/1.1 200 OK';
         $response['body'] = null;
         return $response;
@@ -97,11 +114,11 @@ class PersonController {
 
     private function deleteUser($id)
     {
-        $result = $this->personGateway->find($id);
+        $result = $this->personModel->find($id);
         if (! $result) {
             return $this->notFoundResponse();
         }
-        $this->personGateway->delete($id);
+        $this->personModel->delete($id);
         $response['status_code_header'] = 'HTTP/1.1 200 OK';
         $response['body'] = null;
         return $response;

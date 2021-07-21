@@ -1,13 +1,13 @@
 <?php
 
-namespace Src\System;
+namespace Src;
 
 use PDO;
 
 class DatabaseConnector {
 
     private $dbConnection = null;
-
+    
     public function __construct()
     {
         $host = $_ENV['DB_HOST'];
